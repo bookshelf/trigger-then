@@ -1,11 +1,14 @@
-# triggerThen
+## trigger-then
 
-Adding promises to Backbone event triggers, resolving when 
-everything that needs triggering has completed. Allows returning
-values or promises from the listeners, where a failed promise will
-reject the events.
+Adds promises to `Backbone` event triggers, with a `triggerThen` method,
+resolving when everything that needs triggering has completed. Allows 
+returning values or promises from the listeners, where a failed promise will
+reject the events. An error thrown inside the events will also return a 
+rejected promise.
 
-## Initializing:
+[![Build Status](https://travis-ci.org/bookshelf/trigger-then.png?branch=master)](https://travis-ci.org/bookshelf/trigger-then)
+
+### Initializing:
 
 Provide two arguments to the `trigger-then` library when required: 
 the copy of `Backbone` to mixin the `triggerThen` function, and the
@@ -28,6 +31,6 @@ Model.triggerThen('change').then(function(resp) {
 });
 ```
 
-## License
+### License
 
 MIT
