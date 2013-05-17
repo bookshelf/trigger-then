@@ -10,12 +10,12 @@ var When = require('when');
 describe('triggerThen', function(value) {
 
   it('should take two arguments, the Backbone instance and the promise lib', function() {
-    triggerThen(Backbone, Q.all);
+    triggerThen(Backbone, Q);
     equal(typeof Backbone.Events.triggerThen === 'function', true);
   });
 
   it('should swap out the promise lib if called more than once', function() {
-    triggerThen(Backbone, When.all);
+    triggerThen(Backbone, When);
   });
 
   it('should trigger events, returning a promise the event', function(ok) {
@@ -97,5 +97,28 @@ describe('triggerThen', function(value) {
 
   });
 
+  it('should handle exceptions in the event handlers with a rejected promise', function(ok) {
+
+    var model = new (Backbone.Model.extend({
+      initialize: function() {
+        this.on('exceptionEvent', this.exceptionFn, this);
+      },
+      exceptionFn: function(time) {
+        throw new Error('this is a failure');
+      }
+    }))();
+
+    try {
+      model.trigger('exceptionEvent', 10);
+    } catch (e) {
+      equal(e.toString(), 'Error: this is a failure');
+    }
+
+    model.triggerThen('exceptionEvent', 10).then(null, function(e) {
+      equal(e.toString(), 'Error: this is a failure');
+      ok();
+    });
+
+  });
 
 });
