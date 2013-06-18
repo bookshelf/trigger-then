@@ -6,15 +6,15 @@
 // into the specified `Backbone` copy's `Events` object,
 // using the promise-lib's "all" implementation provided
 // in the second argument.
-(function(mixinFn) {
+(function(root, mixinFn) {
   if (typeof exports === "object") {
     module.exports = mixinFn;
   } else if (typeof define === "function" && define.amd) {
     define('trigger-then', [], function() { return mixinFn; });
   } else {
-    this.triggerThen = mixinFn;
+    root.triggerThen = mixinFn;
   }
-}).call(this, function(Backbone, PromiseLib) {
+})(this, function(Backbone, PromiseLib) {
 
   var Events = Backbone.Events;
   var push   = Array.prototype.push;
