@@ -1,5 +1,7 @@
 ## trigger-then
 
+Created for use in [bookshelf.js](http://github.com/tgriesser/bookshelf)
+
 Adds promises to `Backbone` event triggers, with a `triggerThen` method,
 resolving when everything that needs triggering has completed. Allows 
 returning values or promises from the listeners, where a failed promise will
