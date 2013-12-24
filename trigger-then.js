@@ -1,4 +1,4 @@
-//     trigger-then.js 0.1.1
+//     trigger-then.js 0.3.0
 //     (c) 2013 Tim Griesser
 //     trigger-then may be freely distributed under the MIT license.
 
@@ -12,7 +12,7 @@
   } else if (typeof define === "function" && define.amd) {
     define('trigger-then', [], function() { return mixinFn; });
   } else {
-    root.triggerThen = mixinFn;
+    root['trigger-then'] = mixinFn;
   }
 })(this, function(Backbone, PromiseLib) {
 
@@ -42,19 +42,23 @@
   // events are resolved.
   var triggerThen = Events.triggerThen = function(name) {
     if (!this._events) return PromiseLib.all([]);
-    var names = [name];
     var args = slice.call(arguments, 1);
     var dfds = [];
-    var events = [];
-    if (eventSplitter.test(names[0])) names = names[0].split(eventSplitter);
-    for (var i = 0, l = names.length; i < l; i++) {
-      push.apply(events, this._events[names[i]]);
+    var evts;
+    if (eventSplitter.test(name)) {
+      var names = name.split(eventSplitter);
+      for (var i = 0, l = names.length; i < l; i++) {
+        push.call(dfds, triggerThen.apply(this, [names[i]].concat(args)));
+      }
+      return PromiseLib.all(dfds);
+    } else {
+      evts = this._events[name];
     }
     var allEvents = this._events.all;
 
     // Wrap in a try/catch to reject the promise if any errors are thrown within the handlers.
     try  {
-      if (events) push.apply(dfds, triggerEvents(events, args));
+      if (evts) push.apply(dfds, triggerEvents(evts, args));
       if (allEvents) push.apply(dfds, triggerEvents(allEvents, arguments));
     } catch (e) {
       return PromiseLib.reject(e);

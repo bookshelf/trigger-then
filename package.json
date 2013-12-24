@@ -9,7 +9,7 @@
     "url": "https://github.com/bookshelf/trigger-then"
   },
   "description": "Adding 'promise' triggers to Backbone events",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "license": "MIT",
   "readmeFilename": "README.md",
   "scripts": {
@@ -18,7 +18,7 @@
   "devDependencies": {
     "backbone": "1.0.x",
     "mocha": "1.7.x",
-    "when": "2.1.x",
+    "when": "2.2.x",
     "q": "0.9.x"
   },
   "dependencies": {},

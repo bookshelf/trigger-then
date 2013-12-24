@@ -4,7 +4,7 @@ var deepEqual = assert.deepEqual;
 
 var triggerThen = require('../trigger-then');
 var Backbone = require('backbone');
-var Q = require('q');
+var Q    = require('q');
 var When = require('when');
 
 describe('triggerThen', function(value) {
@@ -118,6 +118,29 @@ describe('triggerThen', function(value) {
       equal(e.toString(), 'Error: this is a failure');
       ok();
     });
+
+  });
+
+  it('should call the "all" event individually for each item', function(ok) {
+    var called = 0;
+    var model = new (Backbone.Model.extend({
+      initialize: function() {
+        this.on('all', this.all, this);
+      },
+      all: function(item) {
+        called++;
+        if (called === 1) {
+          equal(item, 'test');
+        } else {
+          equal(item, 'test2');
+        }
+      }
+    }))();
+
+    model.triggerThen('test test2').then(function() {
+      equal(called, 2);
+      ok();
+    }).then(null, ok);
 
   });
 
