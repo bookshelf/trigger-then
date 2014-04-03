@@ -1,146 +1,120 @@
-var assert = require('assert');
-var equal = assert.equal;
-var deepEqual = assert.deepEqual;
+var chai   = require('chai');
+var expect = chai.expect;
+var sinon  = require('sinon');
+
+chai.use(require('chai-as-promised'));
+chai.use(require('sinon-chai'));
+chai.use(require('chai-things'));
 
 var triggerThen = require('../trigger-then');
-var Backbone = require('backbone');
-var Q    = require('q');
-var When = require('when');
+var Backbone    = require('backbone');
+var Promise     = require('bluebird');
+var When        = require('when');
 
-describe('triggerThen', function(value) {
+require('sinon-as-promised')(Promise);
 
-  it('should take two arguments, the Backbone instance and the promise lib', function() {
-    triggerThen(Backbone, Q);
-    equal(typeof Backbone.Events.triggerThen === 'function', true);
-  });
+describe('triggerThen', function () {
 
-  it('should swap out the promise lib if called more than once', function() {
-    triggerThen(Backbone, When);
-  });
-
-  it('should trigger events, returning a promise the event', function(ok) {
-    var model = new (Backbone.Model.extend({
-      initialize: function() {
-        this.on('fireEvent', this.regularFn, this);
-        this.on('fireEvent', this.dfdFn, this);
-        this.on('errorEvent', this.errorFn, this);
-      },
-      regularFn: function(time) {
-        return time;
-      },
-      dfdFn: function(time) {
-        var dfd = Q.defer();
-        setTimeout(function() {
-          dfd.resolve('This is a deferred object');
-        }, time);
-        return dfd.promise;
-      },
-      errorFn: function(time) {
-        var dfd = When.defer();
-        setTimeout(function() {
-          dfd.reject(new Error('This is a failed promise'));
-        }, time);
-        return dfd.promise;
-      }
-    }))();
-
-    model.trigger('fireEvent', 50);
-    model.triggerThen('fireEvent', 50).then(function(resp) {
-      equal(resp[0], 50);
-      equal(resp[1], 'This is a deferred object');
-    })
-    .then(function() {
-      return model.trigger('fireEvent errorEvent', 10);
-    })
-    .then(function() {
-      return model.triggerThen('fireEvent errorEvent', 10);
-    })
-    .then(null, function(e) {
-      equal(e.toString(), 'Error: This is a failed promise');
-      ok();
+  before(function () {
+    Promise.longStackTraces();
+    Promise.onPossiblyUnhandledRejection(function (err) {
+      throw err;
     });
   });
 
-  it('should resolve properly if there is no name', function(ok) {
-    Backbone.triggerThen().then(function() {
-      return Backbone.triggerThen('noname');
-    })
-    .then(function() {
-      ok();
-    });
+  beforeEach(function () {
+    triggerThen(Backbone, Promise);
   });
 
-  it('should handle "all" properly', function(ok) {
-    var model = new (Backbone.Model.extend({
-      initialize: function() {
-        this.on('fireEvent', this.regularFn, this);
-        this.on('all', this.dfdFn, this);
-      },
-      regularFn: function(time) {
-        return time;
-      },
-      dfdFn: function(time) {
-        var dfd = Q.defer();
-        setTimeout(function() {
-          dfd.resolve('This is a deferred object');
-        }, time);
-        return dfd.promise;
-      }
-    }))();
+  describe('Setup', function () {
 
-    model.trigger('fireEvent', 10);
-    model.triggerThen('fireEvent', 10).then(function(resp) {
-      equal(resp[0], 10);
-      equal(resp[1], 'This is a deferred object');
-      ok();
+    it('should register triggerThen on Backbone.Events', function() {
+      expect(Backbone.Events).to.respondTo('triggerThen');
+    });
+
+    it('can replace the promise library', function () {
+      expect(Backbone.Events.triggerThen()).to.have.property('catch');
+      triggerThen(Backbone, When);
+      expect(Backbone.Events.triggerThen()).to.not.have.property('catch');
     });
 
   });
 
-  it('should handle exceptions in the event handlers with a rejected promise', function(ok) {
+  describe('Triggering events', function () {
 
-    var model = new (Backbone.Model.extend({
-      initialize: function() {
-        this.on('exceptionEvent', this.exceptionFn, this);
-      },
-      exceptionFn: function(time) {
-        throw new Error('this is a failure');
-      }
-    }))();
+    var response = {};
+    var error = new Error();
 
-    try {
-      model.trigger('exceptionEvent', 10);
-    } catch (e) {
-      equal(e.toString(), 'Error: this is a failure');
-    }
-
-    model.triggerThen('exceptionEvent', 10).then(null, function(e) {
-      equal(e.toString(), 'Error: this is a failure');
-      ok();
+    var sync, promise;
+    beforeEach(function () {
+      sync = sinon.stub().returns(response);
+      promise = sinon.stub().resolves(response);
     });
 
-  });
+    var Model;
+    beforeEach(function () {
+      Model = Backbone.Model.extend();
+    });
 
-  it('should call the "all" event individually for each item', function(ok) {
-    var called = 0;
-    var model = new (Backbone.Model.extend({
-      initialize: function() {
-        this.on('all', this.all, this);
-      },
-      all: function(item) {
-        called++;
-        if (called === 1) {
-          equal(item, 'test');
-        } else {
-          equal(item, 'test2');
-        }
-      }
-    }))();
+    var model;
+    beforeEach(function () {
+      model = new Model();
+    });
 
-    model.triggerThen('test test2').then(function() {
-      equal(called, 2);
-      ok();
-    }).then(null, ok);
+    it('resolves if there is no event passed', function () {
+      return model.triggerThen();
+    });
+
+    it('resolves if there are no listeners', function () {
+      return model.triggerThen('unlistened');
+    });
+
+    it('resolves with an array of event responses', function () {
+      model.on('event', sync);
+      model.on('event', promise);
+      model.trigger('event');
+      return model.triggerThen('event').then(function (values) {
+        expect(values).to.have.length(2).and.to.all.equal(response);
+      });
+    });
+
+    it('uses the event context', function () {
+      var context = {};
+      model.on('event', sync, context);
+      return model.triggerThen('event').finally(function () {
+        expect(sync).to.have.been.calledOn(context);
+      });
+    })
+
+    it('can trigger all events', function () {
+      model.on('all', sync);
+      model.on('all', promise);
+      return model.triggerThen('e1 e2').then(function (values) {
+        expect(sync).to.have.been.calledTwice;
+        expect(promise).to.have.been.calledTwice;
+        expect(values).to.have.length(2)
+          .and.to.all.be.an('array')
+          .and.to.all.have.property('length', 2);
+      });
+    });
+
+    it('can trigger multiple events', function () {
+      model.on('e1', sync);
+      model.on('e2', promise);
+      return model.triggerThen('e1 e2').then(function (value) {
+        expect(value).to.have.length(2);
+      });
+    });
+
+    it('rejects if a handler returns a rejected promise', function () {
+      model.on('reject', sinon.stub().rejects(error));
+      return expect(model.triggerThen('reject')).to.be.rejectedWith(error);
+    });
+
+    it('rejects if a handler throws', function () {
+      model.on('throw', sinon.stub().throws(error));
+      return expect(model.triggerThen('throw')).to.be.rejectedWith(error);
+    });
 
   });
 
