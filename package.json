@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "backbone": "1.0.x",
-    "mocha": "1.8.x",
+    "mocha": "1.18.x",
     "when": "2.2.x",
     "bluebird": "1.2.x",
     "chai-as-promised": "~4.1.1",
