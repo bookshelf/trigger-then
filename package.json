@@ -17,9 +17,15 @@
   },
   "devDependencies": {
     "backbone": "1.0.x",
-    "mocha": "1.7.x",
+    "mocha": "1.8.x",
     "when": "2.2.x",
-    "q": "0.9.x"
+    "bluebird": "1.2.x",
+    "chai-as-promised": "~4.1.1",
+    "chai": "~1.9.1",
+    "sinon-chai": "~2.5.0",
+    "sinon": "~1.9.1",
+    "sinon-as-promised": "0.0.3",
+    "chai-things": "~0.2.0"
   },
   "dependencies": {},
   "keywords": [
