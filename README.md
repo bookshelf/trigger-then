@@ -17,7 +17,7 @@ the copy of `Backbone` to mixin the `triggerThen` function, and the
 promise library (assuming it has a `reject` and `all` function).
 
 ```
-require('trigger-then')(Backbone, When);
+require('trigger-then')(Backbone, Promise);
 
 var Model = new Backbone.Model();
 
@@ -25,7 +25,7 @@ Model.triggerThen('change').then(function(resp) {
 
   // success!
 
-}, function(e) {
+}.catch(function(e) {
   
   // error!
   console.log(e.stack);
