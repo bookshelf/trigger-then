@@ -25,7 +25,7 @@ Model.triggerThen('change').then(function(resp) {
 
   // success!
 
-}.catch(function(e) {
+}).catch(function(e) {
   
   // error!
   console.log(e.stack);
