@@ -1,5 +1,7 @@
 ## trigger-then
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/bookshelf/trigger-then.svg)](https://greenkeeper.io/)
+
 Created for use in [bookshelf.js](http://github.com/tgriesser/bookshelf)
 
 Adds promises to `Backbone` event triggers, with a `triggerThen` method,
